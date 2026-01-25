@@ -1,0 +1,26 @@
+# Dépendances
+node_modules/
+*/node_modules/
+
+# Compilation
+dist/
+*/dist/
+
+# Environnement et Sécurité
+.env
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker & Base de données
+postgres_data/
+pgdata/
+data/
+.docker/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store

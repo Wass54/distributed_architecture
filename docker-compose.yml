@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+    container_name: trd-api
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST_BETTING=trd-db-betting
+      - DB_HOST_WALLET=trd-db-wallet
+      - DB_HOST_IDENTITY=trd-db-identity
+    depends_on:
+      - trd-db-betting
+      - trd-db-wallet
+      - trd-db-identity
+      - trd-rabbitmq
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  trd-db-betting:
+    image: postgres:15-alpine
+    container_name: trd-db-betting
+    environment:
+      - POSTGRES_USER=betting_user
+      - POSTGRES_PASSWORD=betting_password
+      - POSTGRES_DB=betting_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - betting_data_final:/var/lib/postgresql/data
+
+  trd-db-wallet:
+    image: postgres:15-alpine
+    container_name: trd-db-wallet
+    environment:
+      - POSTGRES_USER=wallet_user
+      - POSTGRES_PASSWORD=wallet_password
+      - POSTGRES_DB=wallet_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - wallet_data_final:/var/lib/postgresql/data
+
+  trd-db-identity:
+    image: postgres:15-alpine
+    container_name: trd-db-identity
+    environment:
+      - POSTGRES_USER=identity_user
+      - POSTGRES_PASSWORD=identity_password
+      - POSTGRES_DB=identity_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - identity_data_final:/var/lib/postgresql/data
+
+  trd-rabbitmq:
+    image: rabbitmq:3-management
+    container_name: trd-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+
+
+volumes:
+  betting_data_final:
+  wallet_data_final:
+  identity_data_final:
