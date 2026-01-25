@@ -1,98 +1,148 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# TRD (The Real Deal)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Projet de plateforme de paris sportifs distribuée (M2 MIAGE).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Architecture Technique
 
-## Description
+Le projet repose sur une architecture **Micro-services distribuée**, conçue pour assurer la scalabilité et la résilience des transactions financières.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Stack Technologique
+* **Runtime :** Node.js (v20)
+* **Langage :** TypeScript
+* **Framework :** NestJS (Architecture Monorepo)
+* **Conteneurisation :** Docker & Docker Compose
+* **Base de données :** PostgreSQL (x3 instances isolées)
+* **Broker :** RabbitMQ
 
-## Project setup
+### Composants et Services
+Le système est découpé en domaines métiers étanches (Bounded Contexts) respectant les principes du DDD :
 
-```bash
-$ npm install
-```
+1.  **API Gateway**
+    * Point d'entrée unique du système.
+    * Gère le routing et agit comme un reverse-proxy vers les services internes.
 
-## Compile and run the project
+2.  **Service Identity**
+    * Responsable de l'authentification et de la gestion des utilisateurs.
+    * Délivre les tokens JWT nécessaires aux appels sécurisés.
 
-```bash
-# development
-$ npm run start
+3.  **Service Wallet**
+    * Gère les comptes utilisateurs et le grand livre (Ledger).
+    * **Data Isolation :** Possède sa propre base de données PostgreSQL dédiée.
+    * Reçoit les ordres de débit/crédit de manière asynchrone pour garantir la cohérence à terme.
 
-# watch mode
-$ npm run start:dev
+4.  **Service Betting**
+    * Gère le catalogue des matchs, les cotes et la validation des paris.
+    * **Data Isolation :** Possède sa propre base de données PostgreSQL dédiée.
+    * Agit comme "Producteur" d'événements vers le système financier.
 
-# production mode
-$ npm run start:prod
-```
+5.  **Message Broker (RabbitMQ)**
+    * Assure la communication asynchrone et le découplage entre le jeu (Betting) et l'argent (Wallet).
+    * Gère les files d'attente pour la prise de pari (`wallet_debit`) et le paiement des gains (`payout_user`).
 
-## Run tests
+## Membres de l'équipe
 
-```bash
-# unit tests
-$ npm run test
+* Wassim EL BAKHTAOUI
+* Yanis HAMMOUDA
+* Mathis CLAUDEL
 
-# e2e tests
-$ npm run test:e2e
+## Docker et Déploiement
 
-# test coverage
-$ npm run test:cov
-```
+L'infrastructure est entièrement définie via Docker Compose. Les variables d'environnement sont injectées directement dans le manifeste pour faciliter le déploiement sans configuration manuelle.
 
-## Deployment
+### Démarrage
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Pour lancer l'environnement complet (Bases de données, RabbitMQ et Services API) :
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+    # Se placer à la racine du projet
+    cd trd_elbakhtaoui_hammouda_claudel
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+    # Build des images et démarrage des services
+    docker compose up --build
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+    # Optionnel : Démarrage en arrière-plan
+    docker compose up -d --build
 
-## Resources
+L'API Gateway est accessible sur : http://localhost:3000
 
-Check out a few resources that may come in handy when working with NestJS:
+### Arrêt et Nettoyage
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+    # Arrêter les conteneurs et supprimer les réseaux
+    docker compose down
 
-## Support
+## Structure du Dockerfile
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Chaque service utilise une configuration Docker optimisée pour l'environnement Node.js (Multi-stage build) :
+* **Base :** Node.js 20-alpine (Image légère)
+* **Dépendances :** Installation propre via `npm ci`
+* **Build :** Compilation TypeScript via NestJS CLI
+* **Runtime :** Exécution optimisée via `node dist/main`
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Scénarios de Test et Données
 
-## License
+### Données de Test (Fichier Rapide)
+Pour peupler la base de données et tester le flux complet (Inscription -> Dépôt -> Match -> Pari -> Gain) sans utiliser de commandes manuelles, un fichier de requêtes HTTP est fourni.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+**Voir le fichier : `requests.http` à la racine du projet.**
+
+Il est compatible avec l'extension "REST Client" de VS Code ou IntelliJ et permet de jouer le scénario nominal en un clic.
+
+---
+
+### Endpoints API (Documentation manuelle)
+
+Si vous préférez tester manuellement via le terminal, voici les commandes CURL équivalentes.
+
+#### 1. Inscription (Identity Service)
+Crée un utilisateur et retourne son ID.
+
+    curl -X POST http://localhost:3000/identity/register \
+    -H "Content-Type: application/json" \
+    -d '{"email": "test@trd.com", "password": "password123", "username": "TestUser"}'
+
+*Note : Copiez l'ID retourné pour la suite.*
+
+#### 2. Authentification (Identity Service)
+Retourne le Token JWT nécessaire pour les requêtes sécurisées.
+
+    curl -X POST http://localhost:3000/identity/login \
+    -H "Content-Type: application/json" \
+    -d '{"email": "test@trd.com", "password": "password123"}'
+
+*Note : Copiez le `access_token` pour l'utiliser dans le Header `Authorization`.*
+
+#### 3. Dépôt d'argent (Wallet Service)
+Crédite le compte du joueur (Nécessite Authentification).
+*Remplacer `<UUID_UTILISATEUR>` et `<VOTRE_TOKEN_JWT>`.*
+
+    curl -X POST http://localhost:3000/wallet/<UUID_UTILISATEUR>/deposit \
+    -H "Authorization: Bearer <VOTRE_TOKEN_JWT>" \
+    -H "Content-Type: application/json" \
+    -d '{"amount": 100}'
+
+#### 4. Placer un Pari (Flux Asynchrone)
+Le service Betting valide le pari et envoie un événement RabbitMQ au service Wallet pour le débit.
+*Remplacer `<UUID_MATCH_RECUPERE>` (via GET /betting/matches), `<UUID_UTILISATEUR>` et `<VOTRE_TOKEN_JWT>`.*
+
+    curl -X POST http://localhost:3000/betting \
+    -H "Authorization: Bearer <VOTRE_TOKEN_JWT>" \
+    -H "Content-Type: application/json" \
+    -d '{
+    "matchId": "<UUID_MATCH_RECUPERE>",
+    "punterId": "<UUID_UTILISATEUR>",
+    "selection": "HOME",
+    "stake": 20
+    }'
+
+#### 5. Fin de match & Paiement (Flux Asynchrone)
+Simule la fin d'un match. Si le pari est gagnant, le Wallet est crédité automatiquement via RabbitMQ.
+
+    curl -X POST http://localhost:3000/betting/matches/<UUID_MATCH>/finish \
+    -H "Content-Type: application/json" \
+    -d '{"scoreHome": 3, "scoreAway": 0}'
+
+#### 6. Vérification Sécurité (Test d'accès refusé)
+Tente d'accéder au portefeuille sans token JWT. Le serveur doit répondre `401 Unauthorized`.
+
+    curl -X GET http://localhost:3000/wallet/<UUID_UTILISATEUR>

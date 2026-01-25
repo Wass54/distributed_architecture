@@ -1,0 +1,83 @@
+### -------------------------------------------------------
+### SCÉNARIO DE TEST - THE REAL DEAL (TRD)
+### Utiliser l'extension "REST Client" sur VS Code pour lancer les requêtes.
+### -------------------------------------------------------
+
+### 1. Inscription (Identity Service)
+# @name register
+POST http://localhost:3000/identity/register
+Content-Type: application/json
+
+{
+  "email": "joueur@test.com",
+  "password": "password123",
+  "username": "SuperParieur"
+}
+
+### 2. Connexion (Identity Service)
+# @name login
+POST http://localhost:3000/identity/login
+Content-Type: application/json
+
+{
+  "email": "joueur@test.com",
+  "password": "password123"
+}
+
+### ⚠️ IMPORTANT :
+### 1. Copiez le "access_token" de la réponse Login -> Collez après "Bearer"
+### 2. Copiez l'"id" (UUID) de l'utilisateur -> Remplacez "VOTRE_UUID_USER"
+
+### 3. Dépôt d'argent (Wallet Service)
+POST http://localhost:3000/wallet/VOTRE_UUID_USER/deposit
+Content-Type: application/json
+Authorization: Bearer VOTRE_TOKEN_ICI
+
+{
+  "amount": 100
+}
+
+### 4. Création d'un Match (Betting Service - Admin)
+# @name createMatch
+POST http://localhost:3000/betting/matches
+Content-Type: application/json
+Authorization: Bearer VOTRE_TOKEN_ICI
+
+{
+  "homeTeam": "France",
+  "awayTeam": "Brésil",
+  "startTime": "2026-07-15T21:00:00Z",
+  "odds": {
+    "homeWin": 1.5,
+    "draw": 3.2,
+    "awayWin": 2.8
+  }
+}
+
+### ⚠️ IMPORTANT : Copiez l'"id" du match créé -> Remplacez "ID_MATCH"
+
+### 5. Placer un Pari (Betting -> RabbitMQ -> Wallet)
+POST http://localhost:3000/betting
+Content-Type: application/json
+Authorization: Bearer VOTRE_TOKEN_ICI
+
+{
+  "matchId": "ID_MATCH",
+  "punterId": "VOTRE_UUID_USER",
+  "selection": "HOME",
+  "stake": 20
+}
+
+### 6. Consulter le Wallet (Vérification débit)
+GET http://localhost:3000/wallet/VOTRE_UUID_USER
+Authorization: Bearer VOTRE_TOKEN_ICI
+
+### 7. Fin de match & Paiement (Betting Service)
+POST http://localhost:3000/betting/matches/ID_MATCH/finish
+Content-Type: application/json
+Authorization: Bearer VOTRE_TOKEN_ICI
+
+{
+  "scoreHome": 3,
+  "scoreAway": 0
+}
