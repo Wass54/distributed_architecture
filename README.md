@@ -43,7 +43,6 @@ Le système est découpé en domaines métiers étanches (Bounded Contexts) resp
 
 * Wassim EL BAKHTAOUI
 * Yanis HAMMOUDA
-* Mathis CLAUDEL
 
 ## Docker et Déploiement
 
